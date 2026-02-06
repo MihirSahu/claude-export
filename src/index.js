@@ -36,8 +36,8 @@ export async function exportConversations(inputPath, outputDir) {
     throw new Error(`Failed to create output directory: ${err.message}`);
   }
 
-  // Track used filenames to avoid collisions
-  const usedFilenames = new Set();
+  // Track used file paths to avoid collisions
+  const usedFilePaths = new Set();
 
   // Track exported entries for the index
   const indexEntries = [];
@@ -45,38 +45,49 @@ export async function exportConversations(inputPath, outputDir) {
   // Process each conversation
   for (const conversation of conversations) {
     try {
+      // Build date-based subdirectory: YYYY/MM/YYYY-MM-DD
+      const date = new Date(conversation.created_at || 0);
+      const year = String(date.getUTCFullYear());
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const subDir = path.join(year, month, `${year}-${month}-${day}`);
+
       // Generate filename
       let baseName = sanitizeFilename(conversation.name || 'Untitled');
       let filename = `${baseName}.md`;
+      let relativePath = path.join(subDir, filename);
       let counter = 1;
 
       // Handle filename collisions with upper bound
       const MAX_COLLISION_ATTEMPTS = 10000;
-      while (usedFilenames.has(filename.toLowerCase()) && counter < MAX_COLLISION_ATTEMPTS) {
+      while (usedFilePaths.has(relativePath.toLowerCase()) && counter < MAX_COLLISION_ATTEMPTS) {
         filename = `${baseName} (${counter}).md`;
+        relativePath = path.join(subDir, filename);
         counter++;
       }
 
       // Fall back to UUID-based naming if collision limit exceeded
-      if (usedFilenames.has(filename.toLowerCase())) {
+      if (usedFilePaths.has(relativePath.toLowerCase())) {
         const uniqueId = conversation.uuid || Date.now();
         filename = `${baseName}-${uniqueId}.md`;
+        relativePath = path.join(subDir, filename);
       }
-      usedFilenames.add(filename.toLowerCase());
+      usedFilePaths.add(relativePath.toLowerCase());
 
-      // Format and write
+      // Create subdirectory and write file
+      const fullDir = path.join(outputDir, subDir);
+      await fs.mkdir(fullDir, { recursive: true });
       const markdown = formatConversation(conversation);
-      const outputPath = path.join(outputDir, filename);
-      await fs.writeFile(outputPath, markdown, 'utf-8');
+      await fs.writeFile(path.join(outputDir, relativePath), markdown, 'utf-8');
 
       indexEntries.push({
         name: conversation.name || 'Untitled',
         created_at: conversation.created_at,
-        filename
+        relativePath
       });
 
       results.success++;
-      console.log(`✓ Exported: ${filename}`);
+      console.log(`✓ Exported: ${relativePath}`);
     } catch (err) {
       results.failed++;
       const name = conversation.name || conversation.uuid || 'unknown';

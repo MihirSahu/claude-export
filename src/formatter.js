@@ -1,3 +1,4 @@
+import path from 'path';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { version: VERSION } = require('../package.json');
@@ -200,7 +201,7 @@ export function formatConversation(conversation) {
 
 /**
  * Generate a conversation index markdown file
- * @param {Array<{name: string, created_at: string, filename: string}>} entries - Exported conversation entries
+ * @param {Array<{name: string, created_at: string, relativePath: string}>} entries - Exported conversation entries
  * @returns {string} Markdown index document
  */
 export function formatConversationIndex(entries) {
@@ -252,8 +253,11 @@ export function formatConversationIndex(entries) {
     }
 
     const title = entry.name || 'Untitled';
-    const encodedFilename = encodeURIComponent(entry.filename).replace(/%20/g, ' ');
-    parts.push(`  - [${title}](${encodedFilename})`);
+    const encodedPath = entry.relativePath
+      .split(path.sep)
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    parts.push(`  - [${title}](${encodedPath})`);
   }
 
   parts.push('');
