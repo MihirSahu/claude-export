@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { formatConversation, sanitizeFilename, VERSION } from './formatter.js';
+import { formatConversation, formatConversationIndex, sanitizeFilename, VERSION } from './formatter.js';
 
 /**
  * Export conversations from a JSON file to markdown files
@@ -39,6 +39,9 @@ export async function exportConversations(inputPath, outputDir) {
   // Track used filenames to avoid collisions
   const usedFilenames = new Set();
 
+  // Track exported entries for the index
+  const indexEntries = [];
+
   // Process each conversation
   for (const conversation of conversations) {
     try {
@@ -66,6 +69,12 @@ export async function exportConversations(inputPath, outputDir) {
       const outputPath = path.join(outputDir, filename);
       await fs.writeFile(outputPath, markdown, 'utf-8');
 
+      indexEntries.push({
+        name: conversation.name || 'Untitled',
+        created_at: conversation.created_at,
+        filename
+      });
+
       results.success++;
       console.log(`✓ Exported: ${filename}`);
     } catch (err) {
@@ -74,6 +83,14 @@ export async function exportConversations(inputPath, outputDir) {
       results.errors.push(`${name}: ${err.message}`);
       console.error(`✗ Failed: ${name} - ${err.message}`);
     }
+  }
+
+  // Generate conversation index
+  if (indexEntries.length > 0) {
+    const indexMarkdown = formatConversationIndex(indexEntries);
+    const indexPath = path.join(outputDir, 'Conversation Index.md');
+    await fs.writeFile(indexPath, indexMarkdown, 'utf-8');
+    console.log(`✓ Generated: Conversation Index.md`);
   }
 
   return results;
