@@ -126,11 +126,11 @@ describe('formatConversation', () => {
 });
 
 describe('formatConversationIndex', () => {
-  it('should group conversations by month and day', () => {
+  it('should group conversations by month and day with relative paths', () => {
     const entries = [
-      { name: 'Chat A', created_at: '2025-03-21T10:00:00Z', filename: 'Chat A.md' },
-      { name: 'Chat B', created_at: '2025-03-21T08:00:00Z', filename: 'Chat B.md' },
-      { name: 'Chat C', created_at: '2025-02-15T12:00:00Z', filename: 'Chat C.md' },
+      { name: 'Chat A', created_at: '2025-03-21T10:00:00Z', relativePath: path.join('2025', '03', '2025-03-21', 'Chat A.md') },
+      { name: 'Chat B', created_at: '2025-03-21T08:00:00Z', relativePath: path.join('2025', '03', '2025-03-21', 'Chat B.md') },
+      { name: 'Chat C', created_at: '2025-02-15T12:00:00Z', relativePath: path.join('2025', '02', '2025-02-15', 'Chat C.md') },
     ];
 
     const result = formatConversationIndex(entries);
@@ -138,17 +138,17 @@ describe('formatConversationIndex', () => {
     assert.ok(result.includes('# Conversation Index'));
     assert.ok(result.includes('## March 2025'));
     assert.ok(result.includes('- **March 21, 2025**'));
-    assert.ok(result.includes('  - [Chat A](Chat A.md)'));
-    assert.ok(result.includes('  - [Chat B](Chat B.md)'));
+    assert.ok(result.includes('  - [Chat A](2025/03/2025-03-21/Chat%20A.md)'));
+    assert.ok(result.includes('  - [Chat B](2025/03/2025-03-21/Chat%20B.md)'));
     assert.ok(result.includes('## February 2025'));
     assert.ok(result.includes('- **February 15, 2025**'));
-    assert.ok(result.includes('  - [Chat C](Chat C.md)'));
+    assert.ok(result.includes('  - [Chat C](2025/02/2025-02-15/Chat%20C.md)'));
   });
 
   it('should sort most recent first', () => {
     const entries = [
-      { name: 'Old', created_at: '2025-01-01T00:00:00Z', filename: 'Old.md' },
-      { name: 'New', created_at: '2025-12-01T00:00:00Z', filename: 'New.md' },
+      { name: 'Old', created_at: '2025-01-01T00:00:00Z', relativePath: '2025/01/2025-01-01/Old.md' },
+      { name: 'New', created_at: '2025-12-01T00:00:00Z', relativePath: '2025/12/2025-12-01/New.md' },
     ];
 
     const result = formatConversationIndex(entries);
@@ -159,11 +159,11 @@ describe('formatConversationIndex', () => {
 
   it('should handle conversations with no date', () => {
     const entries = [
-      { name: 'No Date', created_at: null, filename: 'No Date.md' },
+      { name: 'No Date', created_at: null, relativePath: '1970/01/1970-01-01/No Date.md' },
     ];
 
     const result = formatConversationIndex(entries);
-    assert.ok(result.includes('[No Date](No Date.md)'));
+    assert.ok(result.includes('[No Date](1970/01/1970-01-01/No%20Date.md)'));
   });
 });
 
@@ -191,15 +191,15 @@ describe('exportConversations', () => {
     assert.strictEqual(results.success, 1);
     assert.strictEqual(results.failed, 0);
 
-    const files = await fs.readdir(outputDir);
-    assert.strictEqual(files.length, 2); // conversation + index
-    assert.ok(files.includes('First Conversation.md'));
-    assert.ok(files.includes('Conversation Index.md'));
+    // Verify date-based folder structure
+    const convFile = path.join(outputDir, '2025', '03', '2025-03-21', 'First Conversation.md');
+    const convContent = await fs.readFile(convFile, 'utf-8');
+    assert.ok(convContent.includes('claude_conversation_id: conv-1'));
 
-    // Verify index content
+    // Verify index
     const indexContent = await fs.readFile(path.join(outputDir, 'Conversation Index.md'), 'utf-8');
     assert.ok(indexContent.includes('# Conversation Index'));
-    assert.ok(indexContent.includes('[First Conversation](First Conversation.md)'));
+    assert.ok(indexContent.includes('[First Conversation](2025/03/2025-03-21/First%20Conversation.md)'));
 
     // Cleanup
     await fs.rm(tmpDir, { recursive: true });
@@ -222,12 +222,17 @@ describe('exportConversations', () => {
 
     assert.strictEqual(results.success, 3);
 
-    const files = await fs.readdir(outputDir);
-    assert.strictEqual(files.length, 4); // 3 conversations + index
+    // Verify files in date folder
+    const dayDir = path.join(outputDir, '2025', '03', '2025-03-21');
+    const files = await fs.readdir(dayDir);
+    assert.strictEqual(files.length, 3);
     assert.ok(files.includes('Same Name.md'));
     assert.ok(files.includes('Same Name (1).md'));
     assert.ok(files.includes('Same Name (2).md'));
-    assert.ok(files.includes('Conversation Index.md'));
+
+    // Verify index exists at root
+    const rootFiles = await fs.readdir(outputDir);
+    assert.ok(rootFiles.includes('Conversation Index.md'));
 
     // Cleanup
     await fs.rm(tmpDir, { recursive: true });
