@@ -8,6 +8,7 @@ import {
   sanitizeFilename,
   escapeYamlValue,
   formatConversation,
+  formatConversationIndex,
   VERSION
 } from '../src/formatter.js';
 import { exportConversations } from '../src/index.js';
@@ -124,6 +125,48 @@ describe('formatConversation', () => {
   });
 });
 
+describe('formatConversationIndex', () => {
+  it('should group conversations by month and day', () => {
+    const entries = [
+      { name: 'Chat A', created_at: '2025-03-21T10:00:00Z', filename: 'Chat A.md' },
+      { name: 'Chat B', created_at: '2025-03-21T08:00:00Z', filename: 'Chat B.md' },
+      { name: 'Chat C', created_at: '2025-02-15T12:00:00Z', filename: 'Chat C.md' },
+    ];
+
+    const result = formatConversationIndex(entries);
+
+    assert.ok(result.includes('# Conversation Index'));
+    assert.ok(result.includes('## March 2025'));
+    assert.ok(result.includes('- **March 21, 2025**'));
+    assert.ok(result.includes('  - [Chat A](Chat A.md)'));
+    assert.ok(result.includes('  - [Chat B](Chat B.md)'));
+    assert.ok(result.includes('## February 2025'));
+    assert.ok(result.includes('- **February 15, 2025**'));
+    assert.ok(result.includes('  - [Chat C](Chat C.md)'));
+  });
+
+  it('should sort most recent first', () => {
+    const entries = [
+      { name: 'Old', created_at: '2025-01-01T00:00:00Z', filename: 'Old.md' },
+      { name: 'New', created_at: '2025-12-01T00:00:00Z', filename: 'New.md' },
+    ];
+
+    const result = formatConversationIndex(entries);
+    const newIdx = result.indexOf('## December 2025');
+    const oldIdx = result.indexOf('## January 2025');
+    assert.ok(newIdx < oldIdx, 'December should appear before January');
+  });
+
+  it('should handle conversations with no date', () => {
+    const entries = [
+      { name: 'No Date', created_at: null, filename: 'No Date.md' },
+    ];
+
+    const result = formatConversationIndex(entries);
+    assert.ok(result.includes('[No Date](No Date.md)'));
+  });
+});
+
 describe('exportConversations', () => {
   it('should export conversations to files', async () => {
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'claude-export-test-'));
@@ -149,8 +192,14 @@ describe('exportConversations', () => {
     assert.strictEqual(results.failed, 0);
 
     const files = await fs.readdir(outputDir);
-    assert.strictEqual(files.length, 1);
-    assert.strictEqual(files[0], 'First Conversation.md');
+    assert.strictEqual(files.length, 2); // conversation + index
+    assert.ok(files.includes('First Conversation.md'));
+    assert.ok(files.includes('Conversation Index.md'));
+
+    // Verify index content
+    const indexContent = await fs.readFile(path.join(outputDir, 'Conversation Index.md'), 'utf-8');
+    assert.ok(indexContent.includes('# Conversation Index'));
+    assert.ok(indexContent.includes('[First Conversation](First Conversation.md)'));
 
     // Cleanup
     await fs.rm(tmpDir, { recursive: true });
@@ -174,10 +223,11 @@ describe('exportConversations', () => {
     assert.strictEqual(results.success, 3);
 
     const files = await fs.readdir(outputDir);
-    assert.strictEqual(files.length, 3);
+    assert.strictEqual(files.length, 4); // 3 conversations + index
     assert.ok(files.includes('Same Name.md'));
     assert.ok(files.includes('Same Name (1).md'));
     assert.ok(files.includes('Same Name (2).md'));
+    assert.ok(files.includes('Conversation Index.md'));
 
     // Cleanup
     await fs.rm(tmpDir, { recursive: true });
