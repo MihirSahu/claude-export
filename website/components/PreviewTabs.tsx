@@ -1,62 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   pageCopy,
   previewViews,
   type PreviewViewId
 } from "@/lib/content";
 
-const AUTO_ROTATE_MS = 4200;
-
 export function PreviewTabs() {
   const [activeView, setActiveView] = useState<PreviewViewId>("source");
-  const [autoRotate, setAutoRotate] = useState(true);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-    if (mediaQuery.matches) {
-      setAutoRotate(false);
-      return;
-    }
-
-    function handleChange(event: MediaQueryListEvent) {
-      if (event.matches) {
-        setAutoRotate(false);
-      }
-    }
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => {
-      mediaQuery.removeEventListener("change", handleChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!autoRotate) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setActiveView((currentView) => {
-        const currentIndex = previewViews.findIndex(
-          (view) => view.id === currentView
-        );
-        const nextIndex = (currentIndex + 1) % previewViews.length;
-        return previewViews[nextIndex]?.id ?? "source";
-      });
-    }, AUTO_ROTATE_MS);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [autoRotate]);
-
-  function handleSelect(viewId: PreviewViewId) {
-    setAutoRotate(false);
-    setActiveView(viewId);
-  }
 
   return (
     <section className="preview-card" aria-labelledby="preview-title">
@@ -81,7 +33,7 @@ export function PreviewTabs() {
                 aria-selected={isActive}
                 aria-controls={`panel-${view.id}`}
                 onClick={() => {
-                  handleSelect(view.id);
+                  setActiveView(view.id);
                 }}
               >
                 {view.label}

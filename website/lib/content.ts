@@ -21,11 +21,12 @@ export const pageCopy = {
 
 export const cliSplash = {
   art: [" ▐▛███▜▌", "▝▜█████▛▘", "  ▘▘ ▝▝"],
-  lines: [
-    "claude-export v1.0.0",
+  version: "claude-export v1.0.0",
+  desktopLines: [
     "Markdown archive · conversations.json",
     "dated folders · tool calls"
-  ]
+  ],
+  mobileLines: ["Markdown archive"]
 } as const;
 
 export const previewViews: PreviewView[] = [
