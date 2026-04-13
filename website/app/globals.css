@@ -293,6 +293,7 @@ code,
 
 .preview-card {
   display: grid;
+  grid-template-rows: auto 1fr;
   gap: 24px;
   min-height: 720px;
   padding: clamp(24px, 3vw, 32px);
@@ -377,6 +378,7 @@ code,
   padding: clamp(18px, 2vw, 24px);
   border: 1px solid var(--border-cream);
   border-radius: var(--radius-lg);
+  overflow: hidden;
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 220ms ease, transform 220ms ease;
@@ -445,11 +447,12 @@ code,
 }
 
 .drawer {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   width: min(100%, 720px);
   margin: 0 auto;
+  flex: 1;
 }
 
 .drawer-tree,
@@ -492,6 +495,7 @@ code,
 }
 
 .drawer-slip {
+  flex: 1;
   background: var(--white);
 }
 
@@ -728,12 +732,22 @@ code,
   }
 
   .preview-card {
-    min-height: 680px;
+    min-height: unset;
     padding: 20px;
   }
 
   .preview-body {
-    min-height: 470px;
+    min-height: unset;
+  }
+
+  .preview-panel {
+    position: relative;
+    inset: unset;
+    overflow: visible;
+  }
+
+  .preview-panel[hidden] {
+    display: none;
   }
 
   .tree-indent-3 {
