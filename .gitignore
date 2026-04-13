@@ -1,3 +1,6 @@
 node_modules/
 *.log
 .DS_Store
+website/node_modules/
+website/.next/
+website/out/
