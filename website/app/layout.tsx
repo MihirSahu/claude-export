@@ -1,12 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-mono"
-});
 
 export const metadata: Metadata = {
   title: "claude-export | Archive Claude conversations as Markdown",
@@ -38,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={mono.variable}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

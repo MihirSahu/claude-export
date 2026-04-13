@@ -10,7 +10,7 @@
     "preview": "python3 -m http.server 4173 -d out"
   },
   "dependencies": {
-    "next": "15.2.4",
+    "next": "15.5.15",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
@@ -19,7 +19,7 @@
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
     "eslint": "8.57.1",
-    "eslint-config-next": "15.2.4",
+    "eslint-config-next": "15.5.15",
     "typescript": "5.8.3"
   }
 }

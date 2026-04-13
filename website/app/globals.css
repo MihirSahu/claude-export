@@ -20,6 +20,17 @@
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
+  --font-mono:
+    "IBM Plex Mono",
+    "SFMono-Regular",
+    SFMono-Regular,
+    ui-monospace,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    "Courier New",
+    monospace;
 }
 
 * {
